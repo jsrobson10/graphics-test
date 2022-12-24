@@ -30,9 +30,9 @@ int main()
 
 	std::cout << pos.xy() << std::endl;
 
-	pos.get_sub<2,1>({0, 1}) += vec<2>({1, 2});
+	pos.sub_matrix<2,1>({0, 1}) += vec<2>({1, 2});
 	
-	std::cout << pos.get_sub<3,1>({0,1}) << std::endl;
+	std::cout << pos.sub_vec<3>({0,2,1}) << std::endl;
 
 	std::cout << pos.zyx() << std::endl;
 	std::cout << pos << std::endl;

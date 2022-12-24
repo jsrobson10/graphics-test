@@ -23,7 +23,7 @@
 	(OT o) noexcept {\
 		for(int i = 0; i < size(); i++)\
 		{\
-			get_p(i) OP F;\
+			at(i) OP F;\
 		}\
 \
 		return *this;\
@@ -66,9 +66,9 @@ public:
 			return parent->get(locs[x]);
 		}
 
-		T& get_p(int x) noexcept
+		T& at(int x) noexcept
 		{
-			return parent->get_p(locs[x]);
+			return parent->at(locs[x]);
 		}
 
 		void set(int x, T v) noexcept
@@ -124,7 +124,7 @@ public:
 		return data[x];
 	}
 
-	virtual T& get_p(int x) noexcept
+	virtual T& at(int x) noexcept
 	{
 		return data[x];
 	}
@@ -139,9 +139,9 @@ public:
 		return get(y * width() + x);
 	}
 	
-	T& get_p(int x, int y) const noexcept
+	T& at(int x, int y) noexcept
 	{
-		return get_p(y * width() + x);
+		return at(y * width() + x);
 	}
 
 	friend std::ostream& operator<<(std::ostream& o, const matrix& mat)
@@ -263,7 +263,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			get_p(i) *= m;
+			at(i) *= m;
 		}
 
 		return *this;
@@ -311,19 +311,25 @@ public:
 	}
 
 	template <unsigned int t_M, unsigned int t_N>
-	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M <= M && t_N <= N, item<t_M, t_N>>::type get_sub(std::array<int, t_M * t_N> lookup)
+	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M * t_N <= M * N, item<t_M, t_N>>::type sub_matrix(std::array<int, t_M * t_N> lookup)
 	{
 		return item<t_M, t_N>(this, lookup);
 	}
 
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return get_p(0); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return get_p(1); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return get_p(2); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return get_p(3); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return get_p(0); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return get_p(1); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return get_p(2); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return get_p(3); }
+	template <unsigned int t_M>
+	constexpr typename std::enable_if<t_M >= 1 && t_M <= M * N, item<t_M, 1>>::type sub_vec(std::array<int, t_M> lookup)
+	{
+		return item<t_M, 1>(this, lookup);
+	}
+
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return at(0); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return at(1); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return at(2); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return at(3); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return at(0); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return at(1); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return at(2); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return at(3); }
 
 	MAT_CONVERT(2, 2, xy, {0 CN 1}); MAT_CONVERT(2, 2, yx, {1 CN 0}); MAT_CONVERT(3, 2, xz, {0 CN 2});
 	MAT_CONVERT(3, 2, yz, {1 CN 2}); MAT_CONVERT(3, 2, zx, {2 CN 0}); MAT_CONVERT(3, 2, zy, {2 CN 1});
