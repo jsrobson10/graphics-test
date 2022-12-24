@@ -1,19 +1,40 @@
 
-#include "vector.hpp"
-#include "matrix.hpp"
+#include "vec.hpp"
+#include "loader.hpp"
+#include "display.hpp"
 
 #include <iostream>
 
 int main()
 {
-	matrix<2> mat = matrix<2>::identity();
-	vector<2> pos({2, 3});
+//	display d("thingy", {{400, 400}}, false);
+/*
+	display::shader shader_vert(d, GL_VERTEX_SHADER, loader::data["shader.vsh"]);
+	display::shader shader_frag(d, GL_FRAGMENT_SHADER, loader::data["shader.fsh"]);
+	display::program prog(d);
 
-	std::cout << mat << std::endl;
-	std::cout << (mat * pos) << std::endl;
+	prog.attach_shader(shader_vert);
+	prog.attach_shader(shader_frag);
+	prog.link();
+*/
+//	while(!d.should_close())
+//	{
+//		prog.use();
 
-	pos.normalize();
+//		d.update();
+//	}
 
+	vec<3> pos({2, 3, 4});
+
+	std::cout << pos << std::endl;
+
+	std::cout << pos.xy() << std::endl;
+
+	pos.get_sub<2,1>({0, 1}) += vec<2>({1, 2});
+	
+	std::cout << pos.get_sub<3,1>({0,1}) << std::endl;
+
+	std::cout << pos.zyx() << std::endl;
 	std::cout << pos << std::endl;
 }
 

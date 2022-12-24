@@ -6,13 +6,15 @@
 #include <array>
 #include <cmath>
 
+#define CN ,
+
 #define MAT_DO_OP(OP, OT, F) \
 	(OT o) const noexcept {\
 		matrix<M, N, T> mat;\
 \
 		for(int i = 0; i < size(); i++)\
 		{\
-			mat.data[i] = data[i] OP F;\
+			mat.set(i, get(i) OP F);\
 		}\
 \
 		return mat;\
@@ -21,7 +23,7 @@
 	(OT o) noexcept {\
 		for(int i = 0; i < size(); i++)\
 		{\
-			data[i] OP F;\
+			get_p(i) OP F;\
 		}\
 \
 		return *this;\
@@ -29,25 +31,73 @@
 #define MAT_ALL_OP(OP, OT, F) \
 	matrix operator OP MAT_DO_OP(OP, OT, F) \
 	matrix& operator OP##= MAT_MUT_OP(OP##=, OT, F)
+#define MAT_CONVERT(LIMIT, SIZE, NAME, JUMP) \
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= LIMIT, item<SIZE>>::type NAME() { return item<SIZE>(this, JUMP); }
 
 template <unsigned int M, unsigned int N = M, typename T = double>
 class matrix
 {
-protected:
+private:
 
 	std::array<T, M * N> data;
 
 public:
 	
-	matrix() noexcept
-	{
+	matrix() noexcept { }
+	matrix(const std::array<T, M * N>& data) : data(data) { }
 
-	}
-
-	matrix(const std::array<T, M * N>& data) noexcept
+	template <unsigned int n_M, unsigned int n_N = 1>
+	class item : public matrix<n_M, n_N, T>
 	{
-		this->data = data;
-	}
+	private:
+	
+		matrix<M, N, T>* parent;
+		std::array<int, n_M * n_N> locs;
+
+	public:
+
+		item(matrix<M, N, T>* parent, const std::array<int, n_M * n_N>& locs) : parent(parent), locs(locs)
+		{
+			
+		}
+
+		T get(int x) const noexcept
+		{
+			return parent->get(locs[x]);
+		}
+
+		T& get_p(int x) noexcept
+		{
+			return parent->get_p(locs[x]);
+		}
+
+		void set(int x, T v) noexcept
+		{
+			parent->set(locs[x], v);
+		}
+
+		item& operator=(const matrix<n_M, n_N, T>& o)
+		{
+			for(int i = 0; i < this->size(); i++)
+			{
+				set(i, o.get(i));
+			}
+
+			return *this;
+		}
+
+		operator matrix<n_M, n_N, T>()
+		{
+			matrix<n_M, n_N, T> mat;
+
+			for(int i = 0; i < this->size(); i++)
+			{
+				mat.set(i, get(i));
+			}
+
+			return mat;
+		}
+	};
 
 	constexpr unsigned int size() const noexcept
 	{
@@ -63,29 +113,49 @@ public:
 	{
 		return M;
 	}
+	
+	virtual void set(int x, T v) noexcept
+	{
+		data[x] = v;
+	}
+
+	virtual T get(int x) const noexcept
+	{
+		return data[x];
+	}
+
+	virtual T& get_p(int x) noexcept
+	{
+		return data[x];
+	}
 
 	void set(int x, int y, T v) noexcept
 	{
-		data[y * width() + x] = v;
+		set(y * width() + x, v);
 	}
 
 	T get(int x, int y) const noexcept
 	{
-		return data[y * width() + x];
+		return get(y * width() + x);
 	}
 	
+	T& get_p(int x, int y) const noexcept
+	{
+		return get_p(y * width() + x);
+	}
+
 	friend std::ostream& operator<<(std::ostream& o, const matrix& mat)
 	{
 		if(N == 1)
 		{
-			o << "vector<" << M << ">(";
+			o << "vec<" << M << ">(";
 
 			for(int i = 0; i < M - 1; i++)
 			{
-				o << mat.data[i] << ", ";
+				o << mat.get(i) << ", ";
 			}
 
-			return o << mat.data[M - 1] << ")";
+			return o << mat.get(M - 1) << ")";
 		}
 		
 		else
@@ -180,7 +250,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = data[i];
+			T v = get(i);
 			sum += v * v;
 		}
 
@@ -193,7 +263,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			data[i] *= m;
+			get_p(i) *= m;
 		}
 
 		return *this;
@@ -206,7 +276,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = data[i];
+			T v = get(i);
 			sum += v * v;
 		}
 
@@ -220,7 +290,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = data[i];
+			T v = get(i);
 			sum += v * v;
 		}
 
@@ -231,7 +301,7 @@ public:
 	{
 		for(int i = 0; i < size(); i++)
 		{
-			if(data[i] != o.data[i])
+			if(get(i) != o.get(i))
 			{
 				return false;
 			}
@@ -240,8 +310,50 @@ public:
 		return true;
 	}
 
-	MAT_ALL_OP(+, const matrix&, o.data[i]);
-	MAT_ALL_OP(-, const matrix&, o.data[i]);
+	template <unsigned int t_M, unsigned int t_N>
+	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M <= M && t_N <= N, item<t_M, t_N>>::type get_sub(std::array<int, t_M * t_N> lookup)
+	{
+		return item<t_M, t_N>(this, lookup);
+	}
+
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return get_p(0); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return get_p(1); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return get_p(2); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return get_p(3); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return get_p(0); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return get_p(1); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return get_p(2); }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return get_p(3); }
+
+	MAT_CONVERT(2, 2, xy, {0 CN 1}); MAT_CONVERT(2, 2, yx, {1 CN 0}); MAT_CONVERT(3, 2, xz, {0 CN 2});
+	MAT_CONVERT(3, 2, yz, {1 CN 2}); MAT_CONVERT(3, 2, zx, {2 CN 0}); MAT_CONVERT(3, 2, zy, {2 CN 1});
+	MAT_CONVERT(3, 2, rg, {0 CN 1}); MAT_CONVERT(3, 2, gr, {1 CN 0}); MAT_CONVERT(3, 2, rb, {0 CN 2});
+	MAT_CONVERT(3, 2, gb, {1 CN 2}); MAT_CONVERT(3, 2, br, {2 CN 0}); MAT_CONVERT(3, 2, bg, {2 CN 1});
+
+	MAT_CONVERT(3, 3, xyz, {0 CN 1 CN 2}); MAT_CONVERT(3, 3, xzy, {0 CN 2 CN 1}); MAT_CONVERT(3, 3, yzx, {1 CN 2 CN 0});
+	MAT_CONVERT(3, 3, yxz, {1 CN 0 CN 2}); MAT_CONVERT(3, 3, zxy, {2 CN 0 CN 1}); MAT_CONVERT(3, 3, zyx, {2 CN 1 CN 0});
+	MAT_CONVERT(3, 3, rgb, {0 CN 1 CN 2}); MAT_CONVERT(3, 3, rbg, {0 CN 2 CN 1}); MAT_CONVERT(3, 3, gbr, {1 CN 2 CN 0});
+	MAT_CONVERT(3, 3, grb, {1 CN 0 CN 2}); MAT_CONVERT(3, 3, brg, {2 CN 0 CN 1}); MAT_CONVERT(3, 3, bgr, {2 CN 1 CN 0});
+
+	MAT_CONVERT(4, 4, xyzw, {0 CN 1 CN 2 CN 3}); MAT_CONVERT(4, 4, xzyw, {0 CN 2 CN 1 CN 3}); MAT_CONVERT(4, 4, yzxw, {1 CN 2 CN 0 CN 3});
+	MAT_CONVERT(4, 4, yxzw, {1 CN 0 CN 2 CN 3}); MAT_CONVERT(4, 4, zxyw, {2 CN 0 CN 1 CN 3}); MAT_CONVERT(4, 4, zyxw, {2 CN 1 CN 0 CN 3});
+	MAT_CONVERT(4, 4, xywz, {0 CN 1 CN 3 CN 2}); MAT_CONVERT(4, 4, xzwy, {0 CN 2 CN 3 CN 1}); MAT_CONVERT(4, 4, yzwx, {1 CN 2 CN 3 CN 0});
+	MAT_CONVERT(4, 4, yxwz, {1 CN 0 CN 3 CN 2}); MAT_CONVERT(4, 4, zxwy, {2 CN 0 CN 3 CN 1}); MAT_CONVERT(4, 4, zywx, {2 CN 1 CN 3 CN 0});
+	MAT_CONVERT(4, 4, xwyz, {0 CN 3 CN 1 CN 2}); MAT_CONVERT(4, 4, xwzy, {0 CN 3 CN 2 CN 1}); MAT_CONVERT(4, 4, ywzx, {1 CN 3 CN 2 CN 0});
+	MAT_CONVERT(4, 4, ywxz, {1 CN 3 CN 0 CN 2}); MAT_CONVERT(4, 4, zwxy, {2 CN 3 CN 0 CN 1}); MAT_CONVERT(4, 4, zwyx, {2 CN 3 CN 1 CN 0});
+	MAT_CONVERT(4, 4, wxyz, {3 CN 0 CN 1 CN 2}); MAT_CONVERT(4, 4, wxzy, {3 CN 0 CN 2 CN 1}); MAT_CONVERT(4, 4, wyzx, {3 CN 1 CN 2 CN 0});
+	MAT_CONVERT(4, 4, wyxz, {3 CN 1 CN 0 CN 2}); MAT_CONVERT(4, 4, wzxy, {3 CN 2 CN 0 CN 1}); MAT_CONVERT(4, 4, wzyx, {3 CN 2 CN 1 CN 0});
+	MAT_CONVERT(4, 4, rgba, {0 CN 1 CN 2 CN 3}); MAT_CONVERT(4, 4, rbga, {0 CN 2 CN 1 CN 3}); MAT_CONVERT(4, 4, gbra, {1 CN 2 CN 0 CN 3});
+	MAT_CONVERT(4, 4, grba, {1 CN 0 CN 2 CN 3}); MAT_CONVERT(4, 4, brga, {2 CN 0 CN 1 CN 3}); MAT_CONVERT(4, 4, bgra, {2 CN 1 CN 0 CN 3});
+	MAT_CONVERT(4, 4, rgab, {0 CN 1 CN 3 CN 2}); MAT_CONVERT(4, 4, rbag, {0 CN 2 CN 3 CN 1}); MAT_CONVERT(4, 4, gbar, {1 CN 2 CN 3 CN 0});
+	MAT_CONVERT(4, 4, grab, {1 CN 0 CN 3 CN 2}); MAT_CONVERT(4, 4, brag, {2 CN 0 CN 3 CN 1}); MAT_CONVERT(4, 4, bgar, {2 CN 1 CN 3 CN 0});
+	MAT_CONVERT(4, 4, ragb, {0 CN 3 CN 1 CN 2}); MAT_CONVERT(4, 4, rabg, {0 CN 3 CN 2 CN 1}); MAT_CONVERT(4, 4, gabr, {1 CN 3 CN 2 CN 0});
+	MAT_CONVERT(4, 4, garb, {1 CN 3 CN 0 CN 2}); MAT_CONVERT(4, 4, barg, {2 CN 3 CN 0 CN 1}); MAT_CONVERT(4, 4, bagr, {2 CN 3 CN 1 CN 0});
+	MAT_CONVERT(4, 4, argb, {3 CN 0 CN 1 CN 2}); MAT_CONVERT(4, 4, arbg, {3 CN 0 CN 2 CN 1}); MAT_CONVERT(4, 4, agbr, {3 CN 1 CN 2 CN 0});
+	MAT_CONVERT(4, 4, agrb, {3 CN 1 CN 0 CN 2}); MAT_CONVERT(4, 4, abrg, {3 CN 2 CN 0 CN 1}); MAT_CONVERT(4, 4, abgr, {3 CN 2 CN 1 CN 0});
+
+	MAT_ALL_OP(+, const matrix&, o.get(i));
+	MAT_ALL_OP(-, const matrix&, o.get(i));
 	MAT_ALL_OP(+, T, o);
 	MAT_ALL_OP(-, T, o);
 	MAT_ALL_OP(*, T, o);
