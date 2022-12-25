@@ -24,17 +24,42 @@ int main()
 //		d.update();
 //	}
 
-	vec<3> pos({2, 3, 4});
+	matrix<4,3> mat1({
+		1,  2,  3,
+		4,  5,  6,
+		7,  8,  9,
+		10, 11, 12
+	});
 
-	std::cout << pos << std::endl;
+	matrix<3,6> mat2({
+		0, 1, 1, 0, 0, 0, 
+		0, 0, 1, 1, 1, 0, 
+		0, 0, 0, 0, 1, 1, 
+	});
 
-	std::cout << pos.xy() << std::endl;
+	matrix mat3 = mat1 * mat2;
 
-	pos.sub_matrix<2,1>({0, 1}) += vec<2>({1, 2});
-	
-	std::cout << pos.sub_vec<3>({0,2,1}) << std::endl;
+	matrix<6,2> mat4({
+		1,0,
+		0,1,
+		1,0,
+		0,1,
+		1,0,
+		0,1,
+	});
 
-	std::cout << pos.zyx() << std::endl;
-	std::cout << pos << std::endl;
+	matrix mat5 = mat3 * mat4;
+
+	for(auto& row : mat3.rows())
+	{
+		std::cout << row << std::endl;
+	}
+
+	std::cout << std::endl;
+
+	for(auto& row : mat5.rows())
+	{
+		std::cout << row << std::endl;
+	}
 }
 

@@ -14,7 +14,7 @@
 \
 		for(int i = 0; i < size(); i++)\
 		{\
-			mat.set(i, get(i) OP F);\
+			mat.data[i] = data[i] OP F;\
 		}\
 \
 		return mat;\
@@ -23,7 +23,7 @@
 	(OT o) noexcept {\
 		for(int i = 0; i < size(); i++)\
 		{\
-			at(i) OP F;\
+			data[i] OP F;\
 		}\
 \
 		return *this;\
@@ -32,116 +32,67 @@
 	matrix operator OP MAT_DO_OP(OP, OT, F) \
 	matrix& operator OP##= MAT_MUT_OP(OP##=, OT, F)
 #define MAT_CONVERT(LIMIT, SIZE, NAME, JUMP) \
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= LIMIT, item<SIZE>>::type NAME() { return item<SIZE>(this, JUMP); }
+	template <class ST, unsigned int t_M = M, unsigned int t_N = N>\
+		constexpr typename std::enable_if<t_N == 1 && t_M >= LIMIT, matrix_sub_t<SIZE, 1>>::type NAME() { return matrix_sub_t<SIZE, 1>(matrix_lookup<T, t_M, STORE_T>(JUMP, data)); }
+#define MAT_MNTST matrix<M, N, T, ST>
 
-template <unsigned int M, unsigned int N = M, typename T = double>
+template <typename T, size_t N, class STORE_T>
+struct matrix_lookup
+{
+	std::array<int, N> lookup;
+	STORE_T* data;
+
+	matrix_lookup() : data(nullptr) { }
+	matrix_lookup(const std::array<int, N>& lookup, STORE_T& data) : lookup(lookup), data(&data) { }
+
+	const T& operator[](size_t id) const { return (*data)[lookup[id]]; }
+	      T& operator[](size_t id)       { return (*data)[lookup[id]]; }
+};
+
+template <unsigned int M, unsigned int N = M, typename T = double, class STORE_T = std::array<T, M * N>>
 class matrix
 {
 private:
 
-	std::array<T, M * N> data;
+	STORE_T data;
+
+	template <unsigned int t_M, unsigned int t_N>
+	using matrix_sub_t = matrix<t_M, t_N, T, matrix_lookup<T, t_M * t_N, STORE_T>>;
 
 public:
 	
-	matrix() noexcept { }
-	matrix(const std::array<T, M * N>& data) : data(data) { }
+	matrix() : data() { }
+	matrix(const STORE_T& data) : data(data) { }
 
-	template <unsigned int n_M, unsigned int n_N = 1>
-	class item : public matrix<n_M, n_N, T>
-	{
-	private:
-	
-		matrix<M, N, T>* parent;
-		std::array<int, n_M * n_N> locs;
-
-	public:
-
-		item(matrix<M, N, T>* parent, const std::array<int, n_M * n_N>& locs) : parent(parent), locs(locs)
-		{
-			
-		}
-
-		T get(int x) const noexcept
-		{
-			return parent->get(locs[x]);
-		}
-
-		T& at(int x) noexcept
-		{
-			return parent->at(locs[x]);
-		}
-
-		void set(int x, T v) noexcept
-		{
-			parent->set(locs[x], v);
-		}
-
-		item& operator=(const matrix<n_M, n_N, T>& o)
-		{
-			for(int i = 0; i < this->size(); i++)
-			{
-				set(i, o.get(i));
-			}
-
-			return *this;
-		}
-
-		operator matrix<n_M, n_N, T>()
-		{
-			matrix<n_M, n_N, T> mat;
-
-			for(int i = 0; i < this->size(); i++)
-			{
-				mat.set(i, get(i));
-			}
-
-			return mat;
-		}
-	};
-
-	constexpr unsigned int size() const noexcept
-	{
-		return M * N;
-	}
-
-	constexpr unsigned int width() const noexcept
-	{
-		return N;
-	}
-
-	constexpr unsigned int height() const noexcept
-	{
-		return M;
-	}
-	
-	virtual void set(int x, T v) noexcept
-	{
-		data[x] = v;
-	}
-
-	virtual T get(int x) const noexcept
-	{
-		return data[x];
-	}
-
-	virtual T& at(int x) noexcept
-	{
-		return data[x];
-	}
+	constexpr unsigned int size()   const noexcept { return M * N; }
+	constexpr unsigned int width()  const noexcept { return N; }
+	constexpr unsigned int height() const noexcept { return M; }
 
 	void set(int x, int y, T v) noexcept
 	{
-		set(y * width() + x, v);
+		data[y * width() + x] = v;
 	}
 
-	T get(int x, int y) const noexcept
+	const T& get(int x, int y) const noexcept
 	{
-		return get(y * width() + x);
+		return data[y * width() + x];
 	}
 	
-	T& at(int x, int y) noexcept
+	T& get(int x, int y) noexcept
 	{
-		return at(y * width() + x);
+		return data[y * width() + x];
+	}
+
+	operator matrix<M, N, T, std::array<T, M * N>>()
+	{
+		matrix<M, N, T, std::array<T, M * N>> m;
+
+		for(int i = 0; i < size(); i++)
+		{
+			m.data[i] = data[i];
+		}
+
+		return m;
 	}
 
 	friend std::ostream& operator<<(std::ostream& o, const matrix& mat)
@@ -152,10 +103,10 @@ public:
 
 			for(int i = 0; i < M - 1; i++)
 			{
-				o << mat.get(i) << ", ";
+				o << mat.data[i] << ", ";
 			}
 
-			return o << mat.get(M - 1) << ")";
+			return o << mat.data[M - 1] << ")";
 		}
 		
 		else
@@ -199,8 +150,8 @@ public:
 		return mat;
 	}
 
-	template <unsigned int t_M = M, unsigned int t_N = N>
-	typename std::enable_if<t_N == t_M, matrix&>::type operator *= (const matrix& o) noexcept
+	template <class ST, unsigned int t_M = M, unsigned int t_N = N>
+	typename std::enable_if<t_N == t_M, matrix&>::type operator *= (const matrix<M, N, T, ST>& o) noexcept
 	{
 		for(int y = 0; y < M; y++)
 		{
@@ -220,8 +171,8 @@ public:
 		return *this;
 	}
 
-	template <unsigned int t_N, unsigned int t_P, unsigned int c_N = N>
-	typename std::enable_if<t_N == c_N, matrix<M, t_P, T>>::type operator * (const matrix<t_N, t_P, T>& o) const noexcept
+	template <class ST, unsigned int t_N, unsigned int t_P>
+	typename std::enable_if<t_N == N, matrix<M, t_P, T>>::type operator * (const matrix<t_N, t_P, T, ST>& o) const noexcept
 	{
 		matrix<M, t_P, T> mat;
 
@@ -250,7 +201,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = get(i);
+			T v = data[i];
 			sum += v * v;
 		}
 
@@ -263,7 +214,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			at(i) *= m;
+			data[i] *= m;
 		}
 
 		return *this;
@@ -276,7 +227,7 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = get(i);
+			T v = data[i];
 			sum += v * v;
 		}
 
@@ -290,18 +241,19 @@ public:
 
 		for(int i = 0; i < M; i++)
 		{
-			T v = get(i);
+			T v = data[i];
 			sum += v * v;
 		}
 
 		return std::sqrt(sum);
 	}
 
-	bool operator == (const matrix& o) const noexcept
+	template <class ST>
+	bool operator == (const matrix<M, N, T, ST>& o) const noexcept
 	{
 		for(int i = 0; i < size(); i++)
 		{
-			if(get(i) != o.get(i))
+			if(data[i] != o.data[i])
 			{
 				return false;
 			}
@@ -311,25 +263,74 @@ public:
 	}
 
 	template <unsigned int t_M, unsigned int t_N>
-	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M * t_N <= M * N, item<t_M, t_N>>::type sub_matrix(std::array<int, t_M * t_N> lookup)
+	typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M * t_N <= M * N, matrix_sub_t<t_M, t_N>>::type sub_matrix(const std::array<int, t_M * t_N>& lookup)
 	{
-		return item<t_M, t_N>(this, lookup);
+		return matrix_sub_t<t_M, t_N>(matrix_lookup<T, t_M * t_N, STORE_T>(lookup, data));
 	}
 
 	template <unsigned int t_M>
-	constexpr typename std::enable_if<t_M >= 1 && t_M <= M * N, item<t_M, 1>>::type sub_vec(std::array<int, t_M> lookup)
+	typename std::enable_if<t_M >= 1 && t_M <= M * N, matrix_sub_t<t_M, 1>>::type sub_matrix(const std::array<int, t_M>& lookup)
 	{
-		return item<t_M, 1>(this, lookup);
+		return matrix_sub_t<t_M, 1>(matrix_lookup<T, t_M, STORE_T>(lookup, data));
 	}
 
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return at(0); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return at(1); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return at(2); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return at(3); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return at(0); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return at(1); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return at(2); }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return at(3); }
+	constexpr matrix_sub_t<M, 1> col(int x)
+	{
+		std::array<int, M> lookup;
+
+		for(int y = 0; y < M; y++)
+		{
+			lookup[y] = y * N + x;
+		}
+
+		return matrix_sub_t<M, 1>(matrix_lookup<T, M, STORE_T>(lookup, data));
+	}
+
+	constexpr matrix_sub_t<N, 1> row(int y)
+	{
+		std::array<int, N> lookup;
+		int off = y * N;
+
+		for(int x = 0; x < N; x++)
+		{
+			lookup[x] = off + x;
+		}
+
+		return matrix_sub_t<N, 1>(matrix_lookup<T, N, STORE_T>(lookup, data));
+	}
+	
+	constexpr std::array<matrix_sub_t<M, 1>, N> cols()
+	{
+		std::array<matrix_sub_t<M, 1>, N> arr;
+
+		for(int i = 0; i < N; i++)
+		{
+			arr[i] = col(i);
+		}
+
+		return arr;
+	}
+
+	constexpr std::array<matrix_sub_t<N, 1>, M> rows()
+	{
+		std::array<matrix_sub_t<N, 1>, M> arr;
+
+		for(int i = 0; i < M; i++)
+		{
+			arr[i] = row(i);
+		}
+
+		return arr;
+	}
+
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return data[3]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return data[3]; }
 
 	MAT_CONVERT(2, 2, xy, {0 CN 1}); MAT_CONVERT(2, 2, yx, {1 CN 0}); MAT_CONVERT(3, 2, xz, {0 CN 2});
 	MAT_CONVERT(3, 2, yz, {1 CN 2}); MAT_CONVERT(3, 2, zx, {2 CN 0}); MAT_CONVERT(3, 2, zy, {2 CN 1});
@@ -358,8 +359,23 @@ public:
 	MAT_CONVERT(4, 4, argb, {3 CN 0 CN 1 CN 2}); MAT_CONVERT(4, 4, arbg, {3 CN 0 CN 2 CN 1}); MAT_CONVERT(4, 4, agbr, {3 CN 1 CN 2 CN 0});
 	MAT_CONVERT(4, 4, agrb, {3 CN 1 CN 0 CN 2}); MAT_CONVERT(4, 4, abrg, {3 CN 2 CN 0 CN 1}); MAT_CONVERT(4, 4, abgr, {3 CN 2 CN 1 CN 0});
 
-	MAT_ALL_OP(+, const matrix&, o.get(i));
-	MAT_ALL_OP(-, const matrix&, o.get(i));
+	template <class ST, unsigned int t_N = N> typename
+		std::enable_if<t_N == 1, matrix>::type operator * MAT_DO_OP(*, const MAT_MNTST&, o.data[i]);
+	template <class ST, unsigned int t_N = N> typename
+		std::enable_if<t_N == 1, matrix&>::type operator *= MAT_MUT_OP(*, const MAT_MNTST&, o.data[i]);
+	template <class ST, unsigned int t_N = N> typename
+		std::enable_if<t_N == 1, matrix>::type operator / MAT_DO_OP(/, const MAT_MNTST&, o.data[i]);
+	template <class ST, unsigned int t_N = N> typename
+		std::enable_if<t_N == 1, matrix&>::type operator /= MAT_MUT_OP(/, const MAT_MNTST&, o.data[i]);
+	template <class ST>
+		matrix<M, N, T, STORE_T> operator + MAT_DO_OP(+, const MAT_MNTST&, o.data[i]);
+	template <class ST>
+		matrix<M, N, T, STORE_T>& operator += MAT_MUT_OP(+, const MAT_MNTST&, o.data[i]);
+	template <class ST>
+		matrix<M, N, T, STORE_T> operator - MAT_DO_OP(-, const MAT_MNTST&, o.data[i]);
+	template <class ST>
+		matrix<M, N, T, STORE_T>& operator -= MAT_MUT_OP(-, const MAT_MNTST&, o.data[i]);
+
 	MAT_ALL_OP(+, T, o);
 	MAT_ALL_OP(-, T, o);
 	MAT_ALL_OP(*, T, o);
