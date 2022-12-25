@@ -54,12 +54,12 @@ class matrix
 {
 private:
 
-	STORE_T data;
-
 	template <unsigned int t_M, unsigned int t_N>
 	using matrix_sub_t = matrix<t_M, t_N, T, matrix_lookup<T, t_M * t_N, STORE_T>>;
 
 public:
+	
+	STORE_T data;
 	
 	matrix() : data() { }
 	matrix(const STORE_T& data) : data(data) { }
@@ -362,19 +362,19 @@ public:
 	template <class ST, unsigned int t_N = N> typename
 		std::enable_if<t_N == 1, matrix>::type operator * MAT_DO_OP(*, const MAT_MNTST&, o.data[i]);
 	template <class ST, unsigned int t_N = N> typename
-		std::enable_if<t_N == 1, matrix&>::type operator *= MAT_MUT_OP(*, const MAT_MNTST&, o.data[i]);
+		std::enable_if<t_N == 1, matrix&>::type operator *= MAT_MUT_OP(*=, const MAT_MNTST&, o.data[i]);
 	template <class ST, unsigned int t_N = N> typename
 		std::enable_if<t_N == 1, matrix>::type operator / MAT_DO_OP(/, const MAT_MNTST&, o.data[i]);
 	template <class ST, unsigned int t_N = N> typename
-		std::enable_if<t_N == 1, matrix&>::type operator /= MAT_MUT_OP(/, const MAT_MNTST&, o.data[i]);
+		std::enable_if<t_N == 1, matrix&>::type operator /= MAT_MUT_OP(/=, const MAT_MNTST&, o.data[i]);
 	template <class ST>
 		matrix<M, N, T, STORE_T> operator + MAT_DO_OP(+, const MAT_MNTST&, o.data[i]);
 	template <class ST>
-		matrix<M, N, T, STORE_T>& operator += MAT_MUT_OP(+, const MAT_MNTST&, o.data[i]);
+		matrix<M, N, T, STORE_T>& operator += MAT_MUT_OP(+=, const MAT_MNTST&, o.data[i]);
 	template <class ST>
 		matrix<M, N, T, STORE_T> operator - MAT_DO_OP(-, const MAT_MNTST&, o.data[i]);
 	template <class ST>
-		matrix<M, N, T, STORE_T>& operator -= MAT_MUT_OP(-, const MAT_MNTST&, o.data[i]);
+		matrix<M, N, T, STORE_T>& operator -= MAT_MUT_OP(-=, const MAT_MNTST&, o.data[i]);
 
 	MAT_ALL_OP(+, T, o);
 	MAT_ALL_OP(-, T, o);
@@ -382,7 +382,10 @@ public:
 	MAT_ALL_OP(/, T, o);
 };
 
+#undef CN
 #undef MAT_DO_OP
 #undef MAT_MUT_OP
 #undef MAT_ALL_OP
+#undef MAT_CONVERT
+#undef MAT_MNTST
 

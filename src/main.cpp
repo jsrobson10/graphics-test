@@ -25,39 +25,22 @@ int main()
 //	}
 
 	matrix<4,3> mat1({
-		1,  2,  3,
-		4,  5,  6,
-		7,  8,  9,
-		10, 11, 12
+		11, 12, 13,
+		14, 15, 16,
+		17, 18, 19,
+		20, 21, 22
 	});
 
-	matrix<3,6> mat2({
-		0, 1, 1, 0, 0, 0, 
-		0, 0, 1, 1, 1, 0, 
-		0, 0, 0, 0, 1, 1, 
-	});
+	mat1.col(1) *= vec<4>({1,2,1,2});
 
-	matrix mat3 = mat1 * mat2;
-
-	matrix<6,2> mat4({
-		1,0,
-		0,1,
-		1,0,
-		0,1,
-		1,0,
-		0,1,
-	});
-
-	matrix mat5 = mat3 * mat4;
-
-	for(auto& row : mat3.rows())
+	for(vec<3> row : mat1.rows())
 	{
 		std::cout << row << std::endl;
+
+		row /= 2;
 	}
-
-	std::cout << std::endl;
-
-	for(auto& row : mat5.rows())
+	
+	for(vec<3> row : mat1.rows())
 	{
 		std::cout << row << std::endl;
 	}
