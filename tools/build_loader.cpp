@@ -1,12 +1,12 @@
 
-#include "../src/loader.hpp"
+#include "../src/loader/loader.hpp"
 
 #include <iostream>
 
 int main(int cargs, const char** vargs)
 {
 	std::string path = ".";
-	std::string include = "\"loader.hpp\"";
+	std::string include = "\"loader/loader.hpp\"";
 
 	if(cargs > 1)
 	{

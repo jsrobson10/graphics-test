@@ -1,6 +1,6 @@
 
 #include "loader.hpp"
-#include "data.hpp"
+#include "../data/data.hpp"
 
 #include <fstream>
 #include <filesystem>

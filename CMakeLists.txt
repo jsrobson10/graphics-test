@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "-gdwarf-4 -DGLFW_ENABLED")
 
 file(GLOB_RECURSE SOURCES src/*.c*)
 
-add_executable(BuildLoader tools/build_loader.cpp src/loader.cpp)
+add_executable(BuildLoader tools/build_loader.cpp src/loader/loader.cpp)
 target_link_libraries(BuildLoader PUBLIC stdc++ m)
 
 add_custom_target(GenResources ALL ./BuildLoader ../resources > ../src/resources.cpp)

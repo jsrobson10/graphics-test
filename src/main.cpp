@@ -1,48 +1,66 @@
 
-#include "vec.hpp"
-#include "loader.hpp"
-#include "display.hpp"
+#include "data/vec.hpp"
+#include "loader/loader.hpp"
+#include "display/display.hpp"
 
 #include <iostream>
 
 int main()
 {
-//	display d("thingy", {{400, 400}}, false);
-/*
+	display::init({4, 3});
+	display d("thingy", {{400, 400}}, true);
+
 	display::shader shader_vert(d, GL_VERTEX_SHADER, loader::data["shader.vsh"]);
 	display::shader shader_frag(d, GL_FRAGMENT_SHADER, loader::data["shader.fsh"]);
 	display::program prog(d);
 
-	prog.attach_shader(shader_vert);
-	prog.attach_shader(shader_frag);
+	prog.attach(shader_vert);
+	prog.attach(shader_frag);
 	prog.link();
-*/
-//	while(!d.should_close())
-//	{
-//		prog.use();
+	prog.use();
 
-//		d.update();
-//	}
+	display::vertexarray va(d);
+	display::buffer<GL_ARRAY_BUFFER, vec<5, float>> buff(d);
+	display::indexlist i_buff(d, {0, 1, 3, 0, 2, 3});
 
-	matrix<4,3> mat1({
-		11, 12, 13,
-		14, 15, 16,
-		17, 18, 19,
-		20, 21, 22
+	va.bind();
+	buff.bind();
+
+	vec<5, float> points[] = {
+			{-0.5, -0.5, 0, 1, 0},
+			{-0.5,  0.5, 1, 0, 0},
+			{ 0.5, -0.5, 0, 0, 1},
+			{ 0.5,  0.5, 0, 1, 0},
+	};
+
+	buff.data(points, 5, GL_STATIC_DRAW);
+
+	i_buff.bind();
+	i_buff.update(1);
+	
+	va.use({
+			{0, sizeof(float), 2, GL_FLOAT, GL_FALSE},
+			{1, sizeof(float), 3, GL_FLOAT, GL_FALSE},
 	});
 
-	mat1.col(1) *= vec<4>({1,2,1,2});
+	//double r = 0;
 
-	for(vec<3> row : mat1.rows())
+	while(!d.should_close())
 	{
-		std::cout << row << std::endl;
+		d.update();
 
-		row /= 2;
-	}
+		glViewport(0, 0, d.get_size().x(), d.get_size().y());
+		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+		
+		//r += 0.001;
 	
-	for(vec<3> row : mat1.rows())
-	{
-		std::cout << row << std::endl;
+		//glUniformMatrix4fv(prog["mat"], 1, GL_FALSE, &mat[0]);
+
+		prog.use();
+		va.bind();
+		i_buff.draw(1);
 	}
+
+	display::terminate();
 }
 
