@@ -1,19 +1,20 @@
 
-#include "display.hpp"
+#include "ebuffer.hpp"
 
-using indexlist = display::indexlist;
+using namespace graphics;
 
-indexlist::indexlist(display& d, const std::vector<GLuint>& items) : buffer(d), base(items)
+ebuffer::ebuffer(display& d, const std::vector<GLuint>& items, int skip) : buffer(d), base(items)
 {
-	count_now = 0;
+	this->count_now = 0;
+	this->skip = skip;
 }
 
-void indexlist::bind()
+void ebuffer::bind()
 {
 	buffer.bind();
 }
 
-void indexlist::update(int count)
+void ebuffer::update(int count)
 {
 	if(count < count_now)
 	{
@@ -22,6 +23,7 @@ void indexlist::update(int count)
 
 	int base_len = base.size();
 	int data_len = count * base_len;
+	int at = 0;
 
 	std::vector<GLuint> indicies(data_len);
 
@@ -29,15 +31,24 @@ void indexlist::update(int count)
 	{
 		for(int j = 0; j < base_len; j += 1)
 		{
-			indicies[j + i] = base[j] + i;
+			indicies[j + i] = base[j] + at;
 		}
+
+		at += skip;
 	}
+
+	for(int i = 0; i < data_len; i++)
+	{
+		std::cout << indicies[i] << " ";
+	}
+
+	std::cout << "\n";
 
 	count_now = count;
 	buffer.data(indicies, GL_STATIC_DRAW);
 }
 
-void indexlist::draw(int count)
+void ebuffer::draw(int count)
 {
 	if(count > count_now)
 	{

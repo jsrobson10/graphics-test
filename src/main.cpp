@@ -1,66 +1,118 @@
 
 #include "data/vec.hpp"
+#include "data/matrix_type.hpp"
 #include "loader/loader.hpp"
-#include "display/display.hpp"
+#include "graphics/graphics.hpp"
 
 #include <iostream>
 
+struct gldata
+{
+	vec<3, float> pos;
+	vec<3, float> colour;
+	vec<2, float> texpos;
+};
+
 int main()
 {
-	display::init({4, 3});
-	display d("thingy", {{400, 400}}, true);
+	graphics::init({4, 3});
+	graphics::display d("thingy", {{400, 400}}, true);
 
-	display::shader shader_vert(d, GL_VERTEX_SHADER, loader::data["shader.vsh"]);
-	display::shader shader_frag(d, GL_FRAGMENT_SHADER, loader::data["shader.fsh"]);
-	display::program prog(d);
+	glEnable(GL_DEPTH_TEST);
+
+	graphics::shader shader_vert(d, GL_VERTEX_SHADER, loader::data["shader.vsh"]);
+	graphics::shader shader_frag(d, GL_FRAGMENT_SHADER, loader::data["shader.fsh"]);
+	graphics::program prog(d);
 
 	prog.attach(shader_vert);
 	prog.attach(shader_frag);
 	prog.link();
 	prog.use();
 
-	display::vertexarray va(d);
-	display::buffer<GL_ARRAY_BUFFER, vec<5, float>> buff(d);
-	display::indexlist i_buff(d, {0, 1, 3, 0, 2, 3});
+	graphics::vertexarray va(d);
+	graphics::buffer<GL_ARRAY_BUFFER, gldata> buff(d);
+	graphics::ebuffer e_buff(d, {0, 1, 3, 0, 2, 3}, 4);
+
+	graphics::texture tex(d);
+	tex.bind();
+	tex.param(GL_TEXTURE_WRAP_S, GL_REPEAT);
+	tex.param(GL_TEXTURE_WRAP_T, GL_REPEAT);
+	tex.param(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	tex.param(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	tex.load_image(loader::data["wall.jpg"], 3);
 
 	va.bind();
 	buff.bind();
 
-	vec<5, float> points[] = {
-			{-0.5, -0.5, 0, 1, 0},
-			{-0.5,  0.5, 1, 0, 0},
-			{ 0.5, -0.5, 0, 0, 1},
-			{ 0.5,  0.5, 0, 1, 0},
+	gldata points[] = {
+			{{-0.5, -0.5, -0.5}, {0, 1, 0}, {0, 0}},
+			{{-0.5,  0.5, -0.5}, {1, 0, 0}, {0, 2}},
+			{{ 0.5, -0.5, -0.5}, {0, 0, 1}, {2, 0}},
+			{{ 0.5,  0.5, -0.5}, {0, 1, 0}, {2, 2}},
+			
+			{{-0.5, -0.5,  0.5}, {0, 1, 0}, {0, 0}},
+			{{-0.5,  0.5,  0.5}, {1, 0, 0}, {0, 2}},
+			{{ 0.5, -0.5,  0.5}, {0, 0, 1}, {2, 0}},
+			{{ 0.5,  0.5,  0.5}, {0, 1, 0}, {2, 2}},
+
+			{{-0.5, -0.5, -0.5}, {0, 1, 0}, {0, 0}},
+			{{-0.5, -0.5,  0.5}, {1, 0, 0}, {0, 2}},
+			{{ 0.5, -0.5, -0.5}, {0, 0, 1}, {2, 0}},
+			{{ 0.5, -0.5,  0.5}, {0, 1, 0}, {2, 2}},
+			
+			{{-0.5,  0.5, -0.5}, {0, 1, 0}, {0, 0}},
+			{{-0.5,  0.5,  0.5}, {1, 0, 0}, {0, 2}},
+			{{ 0.5,  0.5, -0.5}, {0, 0, 1}, {2, 0}},
+			{{ 0.5,  0.5,  0.5}, {0, 1, 0}, {2, 2}},
+
+			{{-0.5, -0.5, -0.5}, {0, 1, 0}, {0, 0}},
+			{{-0.5, -0.5,  0.5}, {1, 0, 0}, {0, 2}},
+			{{-0.5,  0.5, -0.5}, {0, 0, 1}, {2, 0}},
+			{{-0.5,  0.5,  0.5}, {0, 1, 0}, {2, 2}},
+			
+			{{ 0.5, -0.5, -0.5}, {0, 1, 0}, {0, 0}},
+			{{ 0.5, -0.5,  0.5}, {1, 0, 0}, {0, 2}},
+			{{ 0.5,  0.5, -0.5}, {0, 0, 1}, {2, 0}},
+			{{ 0.5,  0.5,  0.5}, {0, 1, 0}, {2, 2}},
 	};
 
-	buff.data(points, 5, GL_STATIC_DRAW);
+	buff.data(points, 24, GL_STATIC_DRAW);
 
-	i_buff.bind();
-	i_buff.update(1);
+	e_buff.bind();
+	e_buff.update(2);
 	
 	va.use({
-			{0, sizeof(float), 2, GL_FLOAT, GL_FALSE},
+			{0, sizeof(float), 3, GL_FLOAT, GL_FALSE},
 			{1, sizeof(float), 3, GL_FLOAT, GL_FALSE},
+			{2, sizeof(float), 2, GL_FLOAT, GL_FALSE},
 	});
 
-	//double r = 0;
+	double r = 0;
 
 	while(!d.should_close())
 	{
 		d.update();
 
-		glViewport(0, 0, d.get_size().x(), d.get_size().y());
+		vec<2> wsize = d.get_size();
+		
+		glViewport(0, 0, wsize.x(), wsize.y());
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		
-		//r += 0.001;
-	
-		//glUniformMatrix4fv(prog["mat"], 1, GL_FALSE, &mat[0]);
+		r += 0.01;
+		matrix<4> camera = matrix_type::projection<4>((double)wsize.x() / (double)wsize.y(), M_PI / 2, 0.1, 1000);
+		matrix<4> mat = matrix_type::identity<4>();
+		
+		mat = matrix_type::rotation3<4>(r, r * 0.3, r * 0.2) * mat;
+		mat = matrix_type::translation<4>({0, 0, -2, 0}) * mat;
+
+		glUniformMatrix4fv(prog["mat"], 1, GL_FALSE, mat);
+		glUniformMatrix4fv(prog["camera"], 1, GL_FALSE, camera);
 
 		prog.use();
 		va.bind();
-		i_buff.draw(1);
+		e_buff.draw(6);
 	}
 
-	display::terminate();
+	graphics::terminate();
 }
 

@@ -1,9 +1,9 @@
 
 #ifdef GLFW_ENABLED
 
-#include "display.hpp"
+#include "vertexarray.hpp"
 
-using vertexarray = display::vertexarray;
+using namespace graphics;
 using item = vertexarray::item;
 
 vertexarray::vertexarray(display& host) : host(&host)

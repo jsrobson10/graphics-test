@@ -1,11 +1,11 @@
 
 #ifdef GLFW_ENABLED
 
-#include "display.hpp"
+#include "shader.hpp"
 
 #include <vector>
 
-using shader = display::shader;
+using namespace graphics;
 
 shader::shader(display& host, GLuint type, const char* code) : host(&host)
 {

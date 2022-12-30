@@ -3,6 +3,8 @@
 
 #include "display.hpp"
 
+using namespace graphics;
+
 static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, const void* userParam)
 {
 	std::cout << "GL CALLBACK (";
@@ -32,23 +34,6 @@ static void GLAPIENTRY MessageCallback(GLenum source, GLenum type, GLuint id, GL
 	}
 
 	std::cout << "): " << message << std::endl;
-}
-
-void display::init(vec<2, int> version)
-{
-	if(!glfwInit())
-	{
-		throw std::runtime_error("failed to initialize glfw");
-	}
-
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, version.x());
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, version.y());
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-}
-
-void display::terminate()
-{
-	glfwTerminate();
 }
 
 display::display(std::string title, vec<2, int> size, bool fullscreen)

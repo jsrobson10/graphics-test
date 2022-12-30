@@ -64,15 +64,24 @@ public:
 	matrix() : data() { }
 	matrix(const STORE_T& data) : data(data) { }
 
-	template<typename... Args>
-		matrix(Args... args) : data({static_cast<T>(args)...})
+	template <typename o_T = T>
+		matrix(const matrix<M, N, o_T, std::array<o_T, M * N>>& o)
 	{
-		static_assert(sizeof...(args) == M * N, "incorrect number of args");
+		for(int i = 0; i < size(); i++)
+		{
+			data[i] = static_cast<T>(o.data[i]);
+		}
 	}
 
-	constexpr unsigned int size()   const noexcept { return M * N; }
-	constexpr unsigned int width()  const noexcept { return N; }
-	constexpr unsigned int height() const noexcept { return M; }
+	template<typename... Args>
+		matrix(T arg1, Args... args) : data({arg1, static_cast<T>(args)...})
+	{
+		static_assert(sizeof...(args) == M * N - 1, "incorrect number of args");
+	}
+
+	static constexpr unsigned int size()   { return M * N; }
+	static constexpr unsigned int width()  { return N; }
+	static constexpr unsigned int height() { return M; }
 
 	void set(int x, int y, T v) noexcept
 	{
@@ -87,6 +96,19 @@ public:
 	T& get(int x, int y) noexcept
 	{
 		return data[y * width() + x];
+	}
+
+	template <typename n_T = T>
+	operator const n_T*()
+	{
+		static n_T data_p[size()];
+
+		for(int i = 0; i < size(); i++)
+		{
+			data_p[i] = static_cast<n_T>(data[i]);
+		}
+
+		return data_p;
 	}
 
 	template <typename n_T = T>
@@ -139,72 +161,6 @@ public:
 
 			return o << ")";
 		}
-	}
-
-	template <unsigned int t_M = M, unsigned int t_N = N>
-	constexpr static typename std::enable_if<t_M == t_N, matrix>::type identity() noexcept
-	{
-		matrix mat;
-
-		for(int y = 0; y < M; y++)
-		{
-			for(int x = 0; x < N; x++)
-			{
-				mat.set(x, y, (x == y) ? 1 : 0);
-			}
-		}
-
-		return mat;
-	}
-
-	template <unsigned int ROT_A = 0, unsigned int ROT_B = 1, int MUL = 1, unsigned int t_M = M, unsigned int t_N = N>
-	constexpr static typename std::enable_if<t_M == t_N && t_M >= 2, matrix>::type rotation(double angle) noexcept
-	{
-		matrix mat = identity();
-		T v_sin = (T)std::sin(angle);
-		T v_cos = (T)std::cos(angle);
-
-		mat.set(ROT_A, ROT_A, v_cos);
-		mat.set(ROT_B, ROT_B, v_cos);
-		mat.set(ROT_A, ROT_B, v_sin * MUL);
-		mat.set(ROT_B, ROT_A, v_sin * -MUL);
-
-		return mat;
-	}
-	
-	template <unsigned int t_M = M, unsigned int t_N = N>
-	constexpr static typename std::enable_if<t_M == t_N, matrix>::type translate(matrix<M - 1, 1> shift) noexcept
-	{
-		matrix mat = identity();
-
-		for(int i = 0; i < M - 1; i++)
-		{
-			mat.set(N - 1, i, shift[i]);
-		}
-
-		return mat;
-	}
-
-	template <unsigned int t_M = M, unsigned int t_N = N>
-	constexpr static typename std::enable_if<t_M == t_N, matrix>::type scale(matrix<M, 1> shift) noexcept
-	{
-		matrix mat = identity();
-
-		for(int i = 0; i < M; i++)
-		{
-			mat.set(i, i, shift[i]);
-		}
-
-		return mat;
-	}
-	
-	template <unsigned int t_M = M, unsigned int t_N = N>
-	constexpr static typename std::enable_if<t_M == t_N && t_M == 4, matrix>::type projection(double fov, double aspect, double near, double far) noexcept
-	{
-		matrix mat = identity();
-
-
-		return mat;
 	}
 
 	template <class ST, unsigned int t_M = M, unsigned int t_N = N>

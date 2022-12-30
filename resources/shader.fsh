@@ -1,11 +1,13 @@
 #version 430
 
-out vec4 colourOut;
-in vec3 colour;
+out vec4 ColourOut;
+in vec3 Colour;
+in vec2 TexCoord;
+
+uniform sampler2D Tex;
 
 void main()
 {
-	colourOut.rgb = colour;
-	colourOut.a = 1;
+	ColourOut.rgba = texture(Tex, TexCoord);
 }
 

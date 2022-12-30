@@ -1,11 +1,11 @@
 
 #ifdef GLFW_ENABLED
 
-#include "display.hpp"
+#include "program.hpp"
 
 #include <vector>
 
-using program = display::program;
+using namespace graphics;
 
 program::program(display& host) : host(&host)
 {
