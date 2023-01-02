@@ -12,14 +12,15 @@ namespace graphics
 	struct program
 	{
 		DO_HEADER(program);
-		program(display&);
-		~program();
-	
+		
 		std::unordered_map<std::string, GLuint> cached;
-	
+
+		program(display& host);
+		~program();
+
 		GLuint operator[] (std::string pos);
-	
-		void attach(const shader&);
+
+		void attach(const shader& s);
 		void link();
 		void use();
 	};

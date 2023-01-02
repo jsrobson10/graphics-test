@@ -52,7 +52,7 @@ GLuint program::operator[] (std::string pos)
 	{
 		return at->second;
 	}
-	
+
 	GLuint id = glGetUniformLocation(this->id, pos.c_str());
 	cached[pos] = id;
 

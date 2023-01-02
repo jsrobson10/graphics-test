@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.14)
 project(Project VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_FLAGS "-gdwarf-4 -DGLFW_ENABLED")
+set(CMAKE_CXX_FLAGS "-O3 -DGLFW_ENABLED")
 
 file(GLOB_RECURSE SOURCES src/*.c*)
 

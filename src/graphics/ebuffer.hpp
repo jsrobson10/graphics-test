@@ -15,6 +15,7 @@ namespace graphics
 		ebuffer(display& d, const std::vector<GLuint>& items, int skip);
 		void update(int count);
 		void draw(int count);
+		void unbind();
 		void bind();
 	};
 };

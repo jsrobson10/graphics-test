@@ -14,17 +14,17 @@ namespace graphics
 		DO_HEADER(texture);
 		vec<D+1, int> detail;
 
-		texture(display& host) : host(&host)
+		constexpr texture(display& host) : host(&host)
 		{
 			glGenTextures(1, &id);
 		}
 
-		~texture()
+		constexpr ~texture()
 		{
 			glDeleteTextures(1, &id);
 		}
 
-		void bind()
+		constexpr void bind()
 		{
 			switch(D)
 			{
@@ -40,7 +40,23 @@ namespace graphics
 			}
 		}
 
-		void param(GLenum key, GLenum val)
+		constexpr void unbind()
+		{
+			switch(D)
+			{
+			case 1:
+				glBindTexture(GL_TEXTURE_1D, 0);
+				break;
+			case 2:
+				glBindTexture(GL_TEXTURE_2D, 0);
+				break;
+			case 3:
+				glBindTexture(GL_TEXTURE_3D, 0);
+				break;
+			}
+		}
+
+		constexpr void param(GLenum key, GLenum val)
 		{
 			switch(D)
 			{
@@ -57,19 +73,19 @@ namespace graphics
 		}
 
 		template <std::enable_if_t<D == 2>* = nullptr>
-		inline void load_image(const std::string& data, int channels)
+		constexpr void load_image(const std::string& data, int channels)
 		{
 			std::vector<char> image;
 			vec<3, int> detail = load_stbi_tex(image, data, channels);
 			load_raw(image, detail);
 		}
 
-		inline void load_raw(const std::vector<char>& data, vec<D+1, int> detail)
+		constexpr void load_raw(const std::vector<char>& data, vec<D+1, int> detail)
 		{
 			load_raw(data.data(), detail);
 		}
 
-		void load_raw(const char* data, vec<D+1, int> detail)
+		constexpr void load_raw(const char* data, vec<D+1, int> detail)
 		{
 			this->detail = detail;
 

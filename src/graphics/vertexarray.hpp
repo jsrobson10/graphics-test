@@ -15,7 +15,9 @@ namespace graphics
 			GLint count;
 			GLenum type;
 			GLboolean normalized;
+			bool is_int;
 	
+			item(GLuint loc, GLint size, GLint count, GLenum type);
 			item(GLuint loc, GLint size, GLint count, GLenum type, GLboolean normalized);
 		};
 	
@@ -24,6 +26,7 @@ namespace graphics
 		~vertexarray();
 	
 		void bind();
+		void unbind();
 		void use(const std::list<item>& items);
 	};
 };

@@ -4,7 +4,7 @@
 namespace data
 {
 	template <typename T>
-	T load(const char* data)
+	constexpr T load(const char* data)
 	{
 		T num = 0;
 
@@ -17,7 +17,7 @@ namespace data
 	}
 
 	template <typename T>
-	char* store(char* data, T val)
+	constexpr char* store(char* data, T val)
 	{
 		for(int i = sizeof(data) - 1; i >= 0; i--)
 		{

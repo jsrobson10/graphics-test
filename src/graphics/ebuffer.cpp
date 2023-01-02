@@ -1,4 +1,6 @@
 
+#ifdef GLFW_ENABLED
+
 #include "ebuffer.hpp"
 
 using namespace graphics;
@@ -12,6 +14,11 @@ ebuffer::ebuffer(display& d, const std::vector<GLuint>& items, int skip) : buffe
 void ebuffer::bind()
 {
 	buffer.bind();
+}
+
+void ebuffer::unbind()
+{
+	buffer.unbind();
 }
 
 void ebuffer::update(int count)
@@ -58,4 +65,6 @@ void ebuffer::draw(int count)
 	
 	glDrawElements(GL_TRIANGLES, count * base.size(), GL_UNSIGNED_INT, 0);
 }
+
+#endif
 
