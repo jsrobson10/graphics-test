@@ -33,7 +33,7 @@
 	constexpr matrix& operator OP##= MAT_MUT_OP(OP##=, OT, F)
 #define MAT_CONVERT(LIMIT, SIZE, NAME, JUMP) \
 	template <unsigned int t_M = M, unsigned int t_N = N>\
-		constexpr typename std::enable_if<t_N == 1 && t_M >= LIMIT, matrix_sub_t<SIZE, 1>>::type NAME() { return matrix_sub_t<SIZE, 1>(matrix_lookup<T, SIZE, STORE_T>(JUMP, data)); }
+		constexpr typename std::enable_if<t_N == 1 && t_M >= LIMIT, matrix_sub_t<SIZE, 1>>::type NAME() noexcept { return matrix_sub_t<SIZE, 1>(matrix_lookup<T, SIZE, STORE_T>(JUMP, data)); }
 #define MAT_MNTST matrix<M, N, T, ST>
 
 template <typename T, size_t N, class STORE_T>
@@ -42,11 +42,11 @@ struct matrix_lookup
 	std::array<int, N> lookup;
 	STORE_T* data;
 
-	constexpr matrix_lookup() : data(nullptr) { }
-	constexpr matrix_lookup(const std::array<int, N>& lookup, STORE_T& data) : lookup(lookup), data(&data) { }
+	constexpr matrix_lookup() noexcept : data(nullptr) { }
+	constexpr matrix_lookup(const std::array<int, N>& lookup, STORE_T& data) noexcept : lookup(lookup), data(&data) { }
 
-	constexpr const T& operator[](size_t id) const { return (*data)[lookup[id]]; }
-	constexpr       T& operator[](size_t id)       { return (*data)[lookup[id]]; }
+	constexpr const T& operator[](size_t id) const noexcept { return (*data)[lookup[id]]; }
+	constexpr       T& operator[](size_t id)       noexcept { return (*data)[lookup[id]]; }
 };
 
 template <unsigned int M, unsigned int N = M, typename T = double, class STORE_T = std::array<T, M * N>>
@@ -61,11 +61,11 @@ public:
 	
 	STORE_T data;
 	
-	constexpr matrix() : data() { }
-	constexpr matrix(const STORE_T& data) : data(data) { }
+	constexpr matrix() noexcept : data() { }
+	constexpr matrix(const STORE_T& data) noexcept : data(data) { }
 
 	template <typename o_T = T>
-		matrix(const matrix<M, N, o_T, std::array<o_T, M * N>>& o)
+		matrix(const matrix<M, N, o_T, std::array<o_T, M * N>>& o) noexcept
 	{
 		for(int i = 0; i < size(); i++)
 		{
@@ -74,14 +74,14 @@ public:
 	}
 
 	template<typename... Args>
-		matrix(T arg1, Args... args) : data({arg1, static_cast<T>(args)...})
+		matrix(T arg1, Args... args) noexcept : data({arg1, static_cast<T>(args)...})
 	{
 		static_assert(sizeof...(args) == M * N - 1, "incorrect number of args");
 	}
 
-	static constexpr unsigned int size()   { return M * N; }
-	static constexpr unsigned int width()  { return N; }
-	static constexpr unsigned int height() { return M; }
+	static constexpr unsigned int size()   noexcept { return M * N; }
+	static constexpr unsigned int width()  noexcept { return N; }
+	static constexpr unsigned int height() noexcept { return M; }
 
 	constexpr void set(int x, int y, T v) noexcept
 	{
@@ -99,7 +99,7 @@ public:
 	}
 
 	template <typename n_T = T>
-	operator const n_T*()
+	operator const n_T*() noexcept
 	{
 		static n_T data_p[size()];
 
@@ -112,7 +112,7 @@ public:
 	}
 
 	template <typename n_T = T>
-	constexpr operator matrix<M, N, n_T, std::array<n_T, M * N>>()
+	constexpr operator matrix<M, N, n_T, std::array<n_T, M * N>>() noexcept
 	{
 		matrix<M, N, n_T, std::array<n_T, M * N>> m;
 
@@ -276,18 +276,18 @@ public:
 	}
 
 	template <unsigned int t_M, unsigned int t_N>
-	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M * t_N <= M * N, matrix_sub_t<t_M, t_N>>::type sub_matrix(const std::array<int, t_M * t_N>& lookup)
+	constexpr typename std::enable_if<t_M >= 1 && t_N >= 1 && t_M * t_N <= M * N, matrix_sub_t<t_M, t_N>>::type sub_matrix(const std::array<int, t_M * t_N>& lookup) noexcept
 	{
 		return matrix_sub_t<t_M, t_N>(matrix_lookup<T, t_M * t_N, STORE_T>(lookup, data));
 	}
 
 	template <unsigned int t_M>
-	constexpr typename std::enable_if<t_M >= 1 && t_M <= M * N, matrix_sub_t<t_M, 1>>::type sub_matrix(const std::array<int, t_M>& lookup)
+	constexpr typename std::enable_if<t_M >= 1 && t_M <= M * N, matrix_sub_t<t_M, 1>>::type sub_matrix(const std::array<int, t_M>& lookup) noexcept
 	{
 		return matrix_sub_t<t_M, 1>(matrix_lookup<T, t_M, STORE_T>(lookup, data));
 	}
 
-	constexpr matrix_sub_t<M, 1> col(int x)
+	constexpr matrix_sub_t<M, 1> col(int x) noexcept
 	{
 		std::array<int, M> lookup;
 
@@ -299,7 +299,7 @@ public:
 		return matrix_sub_t<M, 1>(matrix_lookup<T, M, STORE_T>(lookup, data));
 	}
 
-	constexpr matrix_sub_t<N, 1> row(int y)
+	constexpr matrix_sub_t<N, 1> row(int y) noexcept
 	{
 		std::array<int, N> lookup;
 		int off = y * N;
@@ -312,7 +312,7 @@ public:
 		return matrix_sub_t<N, 1>(matrix_lookup<T, N, STORE_T>(lookup, data));
 	}
 	
-	constexpr std::array<matrix_sub_t<M, 1>, N> cols()
+	constexpr std::array<matrix_sub_t<M, 1>, N> cols() noexcept
 	{
 		std::array<matrix_sub_t<M, 1>, N> arr;
 
@@ -324,7 +324,7 @@ public:
 		return arr;
 	}
 
-	constexpr std::array<matrix_sub_t<N, 1>, M> rows()
+	constexpr std::array<matrix_sub_t<N, 1>, M> rows() noexcept
 	{
 		std::array<matrix_sub_t<N, 1>, M> arr;
 
@@ -336,26 +336,26 @@ public:
 		return arr;
 	}
 
-	constexpr T& operator[] (size_t i) { return data[i]; }
-	constexpr const T& operator[] (size_t i) const { return data[i]; }
+	constexpr       T& operator[] (size_t i)       noexcept { return data[i]; }
+	constexpr const T& operator[] (size_t i) const noexcept { return data[i]; }
 
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() { return data[0]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() { return data[1]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() { return data[2]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() { return data[3]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() { return data[0]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() { return data[1]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() { return data[2]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() { return data[3]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, T&>::type x() noexcept { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, T&>::type y() noexcept { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type z() noexcept { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type w() noexcept { return data[3]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type r() noexcept { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type g() noexcept { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, T&>::type b() noexcept { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, T&>::type a() noexcept { return data[3]; }
 
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, const T&>::type x() const { return data[0]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, const T&>::type y() const { return data[1]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type z() const { return data[2]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, const T&>::type w() const { return data[3]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type r() const { return data[0]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type g() const { return data[1]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type b() const { return data[2]; }
-	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, const T&>::type a() const { return data[3]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 1, const T&>::type x() const noexcept { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 2, const T&>::type y() const noexcept { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type z() const noexcept { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, const T&>::type w() const noexcept { return data[3]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type r() const noexcept { return data[0]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type g() const noexcept { return data[1]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 3, const T&>::type b() const noexcept { return data[2]; }
+	template <unsigned int t_M = M, unsigned int t_N = N> constexpr typename std::enable_if<t_N == 1 && t_M >= 4, const T&>::type a() const noexcept { return data[3]; }
 
 	MAT_CONVERT(2, 2, xy, {0 CN 1}); MAT_CONVERT(2, 2, yx, {1 CN 0}); MAT_CONVERT(3, 2, xz, {0 CN 2});
 	MAT_CONVERT(3, 2, yz, {1 CN 2}); MAT_CONVERT(3, 2, zx, {2 CN 0}); MAT_CONVERT(3, 2, zy, {2 CN 1});

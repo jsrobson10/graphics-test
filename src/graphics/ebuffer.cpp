@@ -44,18 +44,11 @@ void ebuffer::update(int count)
 		at += skip;
 	}
 
-	for(int i = 0; i < data_len; i++)
-	{
-		std::cout << indicies[i] << " ";
-	}
-
-	std::cout << "\n";
-
 	count_now = count;
 	buffer.data(indicies, GL_STATIC_DRAW);
 }
 
-void ebuffer::draw(int count)
+void ebuffer::draw(GLenum mode, int count)
 {
 	if(count > count_now)
 	{
@@ -63,7 +56,7 @@ void ebuffer::draw(int count)
 		update(count);
 	}
 	
-	glDrawElements(GL_TRIANGLES, count * base.size(), GL_UNSIGNED_INT, 0);
+	glDrawElements(mode, count * base.size(), GL_UNSIGNED_INT, 0);
 }
 
 #endif

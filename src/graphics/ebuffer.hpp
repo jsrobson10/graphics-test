@@ -13,8 +13,8 @@ namespace graphics
 		int skip;
 		
 		ebuffer(display& d, const std::vector<GLuint>& items, int skip);
+		void draw(GLenum mode, int count);
 		void update(int count);
-		void draw(int count);
 		void unbind();
 		void bind();
 	};
